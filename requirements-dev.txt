@@ -1,0 +1,14 @@
+# Development dependencies (tests, linting)
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Linting
+flake8==6.1.0
+black==23.12.1
+
+
+#La ligne `-r requirements.txt`** : Inclut automatiquement les dépendances de prod.

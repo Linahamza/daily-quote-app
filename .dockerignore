@@ -1,0 +1,86 @@
+# Dans le terminal (à la racine de daily-quote-app)
+```
+
+**Fichier `.dockerignore` :**
+```
+# Environnements virtuels Python
+venv/
+env/
+ENV/
+.venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Tests et couverture
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+*.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation et fichiers dev
+README.md
+*.md
+docs/
+
+# Fichiers de config locaux
+.env
+.env.local
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fichiers temporaires
+*.tmp
+*.temp
+```
+
+---
+
+### 🎓 **Explication des sections**
+
+#### **1. Environnements virtuels**
+```
+venv/
+```
+**Pourquoi ?** L'image Docker aura son propre Python + dépendances.
+**Gain :** ~200 MB
+
+#### **2. Fichiers compilés**
+```
+__pycache__/
+*.pyc
+```
+**Pourquoi ?** Python recompile automatiquement dans le container.
+**Gain :** ~5-10 MB
+
+#### **3. Tests**
+```
+tests/
+.pytest_cache/
+```
+**Pourquoi ?** Les tests ne servent qu'en développement, pas en production.
+**Gain :** ~2-5 MB
+
+#### **4. Git**
+```
+.git/
