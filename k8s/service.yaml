@@ -1,0 +1,19 @@
+# k8s/service.yaml
+# Service pour exposer Daily Quote
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: daily-quote-service
+  labels:
+    app: daily-quote
+spec:
+  type: NodePort
+  selector:
+    app: daily-quote
+  ports:
+  - port: 80    # ← Service écoute ici (interne)
+    targetPort: 80   # ← Redirige vers le container ici
+    nodePort: 30080   # ← Accessible depuis l'extérieur ici
+    protocol: TCP
+    name: http

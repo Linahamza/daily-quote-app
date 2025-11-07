@@ -1,0 +1,52 @@
+# k8s/deployment.yaml
+# Deployment pour l'application Daily Quote
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daily-quote-deployment
+  labels:
+    app: daily-quote
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: daily-quote
+  template:
+    metadata:
+      labels:
+        app: daily-quote
+    spec:
+      containers:
+      - name: daily-quote
+        image: linahamza/daily-quote:1.0.4  # ← Changé de latest à 1.0.4
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: QUOTABLE_API_URL
+          value: "http://api.quotable.io"
+        resources:
+          requests:
+            memory: "128Mi"   # ← "Je demande au minimum 128 Mi"
+            cpu: "100m"      # ← "Je demande au minimum 10% d'un CPU"
+          limits:
+            memory: "256Mi"  # ← "Je ne dépasserai JAMAIS 256 Mi"
+            cpu: "200m"     # ← "Je ne dépasserai JAMAIS 20% d'un CPU"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3

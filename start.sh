@@ -19,17 +19,22 @@ gunicorn --bind 0.0.0.0:8000 \
          --log-level info \
          "app:create_app()" &
 
-# Attendre que Gunicorn démarre
-echo "⏳ Attente du démarrage de Gunicorn..."
-sleep 3
+# Sauvegarder le PID de Gunicorn
+GUNICORN_PID=$!
 
-# Vérifier que Gunicorn écoute
-if ! nc -z 127.0.0.1 8000; then
-    echo "❌ ERREUR: Gunicorn n'a pas démarré correctement"
+# Attendre que Gunicorn démarre
+echo "⏳ Attente du démarrage de Gunicorn (PID: $GUNICORN_PID)..."
+sleep 5
+
+# Vérifier que le processus Gunicorn existe encore
+if ! kill -0 $GUNICORN_PID 2>/dev/null; then
+    echo "❌ ERREUR: Gunicorn s'est arrêté (PID $GUNICORN_PID)"
+    echo "📋 Processus actifs :"
+    ps aux
     exit 1
 fi
 
-echo "✅ Gunicorn démarré avec succès"
+echo "✅ Gunicorn démarré avec succès (PID: $GUNICORN_PID)"
 
 # 2. Démarrer Nginx en avant-plan
 echo "🌐 Démarrage de Nginx (port 80)..."
