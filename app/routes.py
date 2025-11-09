@@ -36,5 +36,6 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'daily-quote-api',
-        'version': '1.0.3' # ← Changé de 1.0.0 à 1.0.3
+        'version': '2.0.0', # ← Changé de 1.0.3 à 2.0.0
+         'ci_cd': 'GitHub Actions'  # ← Ajout
     }), 200
