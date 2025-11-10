@@ -36,11 +36,25 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
   
-      # Step 3 : Pas de config, juste exclure README manuellement
+      # Step 3 : Créer config (ignore README uniquement)
       - name: Create Gitleaks config
         run: |
-          gitleaks detect --source . --no-git --verbose --redact | grep -v "README.md" || exit 1
-
+          # Scanner tous les fichiers
+          gitleaks detect --source . --no-git --verbose --redact --report-format json --report-path results.json
+          
+          # Filtrer les résultats pour exclure README.md
+          if [ -f results.json ]; then
+            leaks=$(jq '[.[] | select(.File != "README.md")]' results.json)
+            leak_count=$(echo "$leaks" | jq 'length')
+            
+            if [ "$leak_count" -gt 0 ]; then
+              echo "❌ Found $leak_count secret(s) (excluding README.md):"
+              echo "$leaks" | jq -r '.[] | "File: \(.File), Line: \(.StartLine), Secret: \(.RuleID)"'
+              exit 1
+            else
+              echo "✅ No secrets found (README.md excluded)"
+            fi
+          fi
 
 
   # Job 2 : Build et Push (APRÈS security-scan)
