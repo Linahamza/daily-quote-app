@@ -52,7 +52,7 @@ jobs:
       # Step 4 : Scan avec config
       - name: Run Gitleaks
         run: |
-          gitleaks detect --source . --verbose --redact --config .gitleaks.toml
+          gitleaks detect --source . --verbose --redact --exit-code 1 --config .gitleaks.toml
 
   # Job 2 : Build et Push (APRÈS security-scan)
   build-and-push:
