@@ -36,22 +36,29 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
   
-      # Step 3 : Créer config Gitleaks
-      - name: Create Gitleaks config
-        run: |
-          cat > .gitleaks.toml << 'EOF'
-          title = "Gitleaks config"
-          
-          [allowlist]
-          paths = [
-            '''README\.md'''
-          ]
-          EOF
-
-      # Step 4 : Scanner avec config
+      # Step 3 : Scanner et ignorer README.md
       - name: Run Gitleaks
         run: |
-          gitleaks detect --source . --no-git --config .gitleaks.toml --verbose
+          # Scanner et créer un rapport JSON
+          gitleaks detect --source . --no-git --redact --report-format json --report-path results.json --exit-code 0
+          
+          # Si aucun secret trouvé, SUCCESS
+          if [ ! -f results.json ] || [ ! -s results.json ]; then
+            echo "✅ No secrets found"
+            exit 0
+          fi
+          
+          # Filtrer pour exclure README.md
+          secrets_count=$(jq '[.[] | select(.File != "README.md")] | length' results.json)
+          
+          if [ "$secrets_count" -eq 0 ]; then
+            echo "✅ No secrets found in code (README.md ignored)"
+            exit 0
+          else
+            echo "❌ Found $secrets_count secret(s) in code:"
+            jq -r '[.[] | select(.File != "README.md")] | .[] | "  - \(.File):\(.StartLine) [\(.RuleID)]"' results.json
+            exit 1
+          fi
 
 
 
