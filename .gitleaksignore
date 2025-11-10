@@ -1,4 +1,3 @@
-# Ignorer les fichiers de documentation
-README.md
+﻿README.md
 docs/
-**/*.md
+*.md

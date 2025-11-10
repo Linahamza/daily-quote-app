@@ -38,7 +38,7 @@ jobs:
       # Step 3 : Scan avec .gitleaksignore
       - name: Run Gitleaks
         run: |
-          gitleaks detect --source . --verbose --no-git --redact
+          gitleaks detect --source . --verbose --no-git --redact -i .gitleaksignore
 
   # Job 2 : Build et Push (APRÈS security-scan)
   build-and-push:
