@@ -36,24 +36,28 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
   
-      # Step 3 : Créer config (ignore README uniquement)
-      - name: Create Gitleaks config
+      # Step 3 : Scanner et ignorer README.md
+      - name: Run Gitleaks
         run: |
-          # Scanner tous les fichiers
-          gitleaks detect --source . --no-git --verbose --redact --report-format json --report-path results.json
+          # Scanner et créer un rapport JSON
+          gitleaks detect --source . --no-git --redact --report-format json --report-path results.json --exit-code 0
           
-          # Filtrer les résultats pour exclure README.md
-          if [ -f results.json ]; then
-            leaks=$(jq '[.[] | select(.File != "README.md")]' results.json)
-            leak_count=$(echo "$leaks" | jq 'length')
-            
-            if [ "$leak_count" -gt 0 ]; then
-              echo "❌ Found $leak_count secret(s) (excluding README.md):"
-              echo "$leaks" | jq -r '.[] | "File: \(.File), Line: \(.StartLine), Secret: \(.RuleID)"'
-              exit 1
-            else
-              echo "✅ No secrets found (README.md excluded)"
-            fi
+          # Si aucun secret trouvé, SUCCESS
+          if [ ! -f results.json ] || [ ! -s results.json ]; then
+            echo "✅ No secrets found"
+            exit 0
+          fi
+          
+          # Filtrer pour exclure README.md
+          secrets_count=$(jq '[.[] | select(.File != "README.md")] | length' results.json)
+          
+          if [ "$secrets_count" -eq 0 ]; then
+            echo "✅ No secrets found in code (README.md ignored)"
+            exit 0
+          else
+            echo "❌ Found $secrets_count secret(s) in code:"
+            jq -r '[.[] | select(.File != "README.md")] | .[] | "  - \(.File):\(.StartLine) [\(.RuleID)]"' results.json
+            exit 1
           fi
 
 
