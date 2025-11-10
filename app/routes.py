@@ -3,6 +3,10 @@ Routes de l'API Daily Quote
 Définit les endpoints HTTP
 """
 
+
+"""Ajout un commentaire pour tester le Tester Gitleaks"""
+
+
 from flask import Blueprint, jsonify
 from app.services import QuoteService
 
