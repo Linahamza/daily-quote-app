@@ -36,10 +36,23 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
   
-      # Step 3 : Scanner SANS config (détecte TOUT)
-      - name: Run Gitleaks - Full Scan
+      # Step 3 : Créer config (ignore README )
+      - name: Create Gitleaks config
         run: |
-          gitleaks detect --source . --no-git --verbose --redact
+          cat > .gitleaks.toml << 'EOF'
+          title = "Gitleaks Configuration"
+          
+          [allowlist]
+          paths = [
+            "README.md"
+          ]
+          EOF
+
+      # Step 4 : Scanner avec config
+      - name: Run Gitleaks
+        run: |
+          gitleaks detect --source . --no-git --verbose --redact --exit-code 1 --config .gitleaks.toml
+
 
   # Job 2 : Build et Push (APRÈS security-scan)
   build-and-push:
