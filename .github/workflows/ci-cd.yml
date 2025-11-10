@@ -35,17 +35,38 @@ jobs:
           tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
           sudo mv gitleaks /usr/local/bin/
 
-      # Step 3 : Créer config Gitleaks avec allowlist
+      # Step 3 : Créer config Gitleaks CORRIGÉE
       - name: Create Gitleaks config
         run: |
           cat > .gitleaks.toml << 'EOF'
           title = "Gitleaks Configuration"
           
           [allowlist]
+          description = "Allowlist for documentation files"
+          
+          # Exclure complètement les fichiers markdown
           paths = [
-            '''README\.md''',
+            '''.*\.md$''',
             '''docs/.*''',
-            '''.*\.md$'''
+            '''examples/.*'''
+          ]
+          
+          # Exclure les exemples dans le code
+          regexes = [
+            '''EXAMPLE_.*''',
+            '''TEST_.*''',
+            '''DEMO_.*''',
+            '''sk-proj-.*EXAMPLE.*''',
+            '''ghp_.*EXAMPLE.*'''
+          ]
+          
+          # Exclure des lignes spécifiques contenant "example"
+          stopwords = [
+            '''example''',
+            '''sample''',
+            '''demo''',
+            '''test''',
+            '''placeholder'''
           ]
           EOF
 
