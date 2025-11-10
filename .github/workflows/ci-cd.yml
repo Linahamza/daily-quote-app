@@ -20,25 +20,25 @@ jobs:
   security-scan:
     name: Security Scan - Secrets Detection
     runs-on: ubuntu-latest
-
+    
     steps:
       # Step 1 : Checkout
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      
       # Step 2 : Installation de Gitleaks
       - name: Install Gitleaks
         run: |
           wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
           tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
           sudo mv gitleaks /usr/local/bin/
-
-      # Step 3 : Scan avec options étendues (ignore README)
+      
+      # Step 3 : Scan avec .gitleaksignore
       - name: Run Gitleaks
         run: |
-          gitleaks detect --source . --verbose --no-git --redact --exclude-path="README.md"
+          gitleaks detect --source . --verbose --no-git --redact
 
   # Job 2 : Build et Push (APRÈS security-scan)
   build-and-push:
