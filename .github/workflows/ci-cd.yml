@@ -15,6 +15,7 @@ env:
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   IMAGE_NAME: daily-quote
 
+  
 jobs:
   # Job 1 : Scan de sécurité (secrets) [Gitleaks]
   security-scan:
