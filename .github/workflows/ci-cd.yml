@@ -16,13 +16,13 @@ env:
   IMAGE_NAME: daily-quote
 
 jobs:
-  # Job 1 : Scan de sécurité (secrets)
+  # Job 1 : Scan de sécurité (secrets) [Gitleaks]
   security-scan:
     name: Security Scan - Secrets Detection
     runs-on: ubuntu-latest
     
     steps:
-       # Step 1 : Checkout
+      # Step 1 : Checkout
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -35,7 +35,6 @@ jobs:
           tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
           sudo mv gitleaks /usr/local/bin/
 
-  
       # Step 3 : Scanner et ignorer README.md
       - name: Run Gitleaks
         run: |
@@ -60,13 +59,35 @@ jobs:
             exit 1
           fi
 
+  # JOB 2 : QUALITÉ DU CODE + SAST (SonarCloud)
+  sonarcloud:
+    name: 🔍 Code Quality + SAST (SonarCloud)
+    runs-on: ubuntu-latest
+    needs: security-scan  # Attend que Gitleaks réussisse
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Historique complet pour le blame
 
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # Job 2 : Build et Push (APRÈS security-scan)
+      - name: SonarCloud Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
+  # Job 3 : Build et Push (APRÈS security-scan)
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    needs: security-scan  # ← Attend que security-scan réussisse
+    needs: [security-scan, sonarcloud]  # ← Attend que 2 scans réussis
 
     steps:
       # Step 1 : Checkout du code
@@ -109,7 +130,7 @@ jobs:
       - name: Image tags
         run: echo "Tags created:- ${{ steps.meta.outputs.tags }}"
   
-  # Job 3 : Scan de vulnérabilités de l'image
+  # Job 4 : Scan de vulnérabilités de l'image [Trivy]
   vulnerability-scan:  
     name: Vulnerability Scan - Docker Image
     runs-on: ubuntu-latest
