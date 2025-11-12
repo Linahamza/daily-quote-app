@@ -8,6 +8,13 @@ API REST qui fournit des citations inspirantes aléatoires.
 ![Docker Pulls](https://img.shields.io/docker/pulls/linahamza/daily-quote)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+<!-- Badges SonarCloud -->
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Linahamza_daily-quote-app&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Linahamza_daily-quote-app)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Linahamza_daily-quote-app&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Linahamza_daily-quote-app)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Linahamza_daily-quote-app&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Linahamza_daily-quote-app)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=Linahamza_daily-quote-app&metric=bugs)](https://sonarcloud.io/summary/new_code?id=Linahamza_daily-quote-app)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Linahamza_daily-quote-app&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Linahamza_daily-quote-app)
+
 <!-- Badges de technologies existants -->
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
@@ -19,9 +26,8 @@ API REST qui fournit des citations inspirantes aléatoires.
 Ce projet fait partie d'un TP DevOps couvrant :
 - ✅ **PARTIE 1** : Application Flask REST API
 - ✅ **PARTIE 2** : Dockerisation avec Nginx
-- ✅ **PARTIE 3** : Pipeline CI/CD avec GitHub Actions (Gitleaks + Trivy)
+- ✅ **PARTIE 3** : Pipeline CI/CD avec GitHub Actions (Gitleaks + SonarCloud + Trivy)
 - ⏭️ **PARTIE 4** : Déploiement sur Kubernetes
-- ⏭️ **PARTIE 5** : GitOps avec ArgoCD
 
 ## 🚀 Fonctionnalités
 
@@ -31,7 +37,7 @@ Ce projet fait partie d'un TP DevOps couvrant :
 - 🐳 Dockerisé avec Nginx + Gunicorn
 - 🔒 Multi-stage build (image Alpine 120 MB)
 - 🛡️ Container non-root (sécurité)
-- 🔐 Pipeline CI/CD automatisé (scan de sécurité + build)
+- 🔐 Pipeline CI/CD automatisé (scan de sécurité multi-couches + build)
 
 ## 📡 Endpoints
 
@@ -95,28 +101,59 @@ curl "http://localhost:8080/api/authors?limit=20"
 | Alpine Linux | 3.x | OS (base image) |
 | GitHub Actions | - | CI/CD Pipeline |
 | Gitleaks | 8.18.0 | Scan de secrets |
+| **SonarCloud** | - | **Code quality + SAST** |
 | Trivy | latest | Scan de vulnérabilités |
 
-## 🔒 Sécurité et CI/CD
+## 🔒 Pipeline de Sécurité Multi-Couches
 
-Ce projet utilise un pipeline CI/CD automatisé avec 3 étapes :
+Notre pipeline CI/CD implémente une stratégie **Defense in Depth** avec 4 couches de sécurité :
 
-### 1️⃣ **Scan de sécurité (Gitleaks)**
-- 🔍 Détecte les secrets dans le code
-- 🚫 Bloque le pipeline si secrets trouvés
-- ✅ README.md exclu du scan
+### Architecture du Pipeline
 
-### 2️⃣ **Build & Push Docker**
-- 🐳 Build automatique de l'image Docker
-- 📤 Push vers Docker Hub (tag `latest` + SHA)
-- 🏷️ Métadonnées et labels automatiques
+```
+┌─────────────────────────────────────────────────┐
+│        PIPELINE DE SÉCURITÉ COMPLET             │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  1️⃣ Gitleaks       → Secrets hardcodés         │
+│  2️⃣ SonarCloud     → Code bugs + SAST          │
+│  3️⃣ Docker Build   → Image sécurisée           │
+│  4️⃣ Trivy          → CVE dans dépendances      │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
 
-### 3️⃣ **Scan de vulnérabilités (Trivy)**
-- 🛡️ Scan de l'image Docker
-- ⚠️ Détecte les CVE CRITICAL et HIGH
-- 📊 Résultats dans les logs GitHub Actions
+### Détails des Scans
 
-**Badge de statut** : Le badge vert ✅ en haut du README indique que tous les scans passent !
+| Couche | Outil | Détecte | Bloque le Pipeline |
+|--------|-------|---------|-------------------|
+| **1. Secrets** | Gitleaks | API keys, tokens, passwords hardcodés | ✅ Oui |
+| **2. Code Quality** | SonarCloud | Bugs, vulnerabilities (SAST), code smells, duplications | ✅ Oui (Quality Gate) |
+| **3. Build** | Docker | Image optimisée et sécurisée | - |
+| **4. Dependencies** | Trivy | CVE dans Flask, Gunicorn, packages Python | ⚠️ Warning |
+
+### 🔍 Pourquoi SonarCloud ?
+
+SonarCloud comble les **angles morts** non couverts par Gitleaks et Trivy :
+
+- **Gitleaks** détecte les secrets hardcodés → ✅ mais pas les bugs dans le code
+- **Trivy** détecte les CVE dans les dépendances → ✅ mais pas les failles dans VOTRE code
+- **SonarCloud** analyse VOTRE code pour détecter :
+  - 🐛 Bugs (null pointers, logic errors)
+  - 🔓 Vulnérabilités (SQL injection, XSS, path traversal)
+  - 🗑️ Code smells (dette technique, duplications)
+  - 📊 Complexité cyclomatique excessive
+
+**Exemple concret :**
+```python
+# ❌ Détecté par SonarCloud, IGNORÉ par Gitleaks/Trivy
+@app.route('/quote/<author>')
+def get_quote(author):
+    query = f"SELECT * FROM quotes WHERE author = '{author}'"  # SQL Injection !
+    db.execute(query)
+```
+
+**Badge de statut** : Les badges verts ✅ en haut du README indiquent que tous les scans passent !
 
 ## 📦 Installation et Démarrage
 
@@ -143,10 +180,10 @@ git clone https://github.com/Linahamza/daily-quote-app.git
 cd daily-quote-app
 
 # Builder l'image
-docker build -t daily-quote:1.0.2 .
+docker build -t daily-quote:1.0.4 .
 
 # Lancer le container
-docker run -d -p 8080:80 --name daily-quote daily-quote:1.0.2
+docker run -d -p 8080:80 --name daily-quote daily-quote:1.0.4
 
 # Voir les logs
 docker logs -f daily-quote
@@ -203,12 +240,15 @@ python main.py
 daily-quote-app/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml         # Pipeline CI/CD
+│       └── ci-cd.yml         # Pipeline CI/CD complet
 ├── app/
 │   ├── __init__.py           # Factory Flask
 │   ├── config.py             # Configuration
 │   ├── routes.py             # Endpoints API
 │   └── services.py           # Logique métier
+├── k8s/                      # Manifestes Kubernetes
+│   ├── deployment.yaml       # Deployment
+│   └── service.yaml          # Service NodePort
 ├── nginx/
 │   └── nginx.conf            # Configuration Nginx
 ├── tests/
@@ -216,6 +256,7 @@ daily-quote-app/
 │   └── test_services.py      # Tests des services
 ├── Dockerfile                # Multi-stage build
 ├── .dockerignore             # Fichiers à exclure
+├── sonar-project.properties  # Configuration SonarCloud
 ├── start.sh                  # Script de démarrage
 ├── requirements.txt          # Dépendances production
 ├── requirements-dev.txt      # Dépendances développement
@@ -249,6 +290,7 @@ open htmlcov/index.html
 
 - **Docker Hub :** https://hub.docker.com/r/linahamza/daily-quote
 - **GitHub Actions :** https://github.com/Linahamza/daily-quote-app/actions
+- **SonarCloud Dashboard :** https://sonarcloud.io/dashboard?id=Linahamza_daily-quote-app
 - **API Quotable.io :** https://github.com/lukePeavey/quotable
 - **Documentation Flask :** https://flask.palletsprojects.com/
 
